@@ -1,0 +1,2 @@
+import { Router } from 'express'; import { requireAuth } from '../middleware/authMiddleware.js'; import { requireRole } from '../middleware/requireRole.js'; import * as controller from '../controllers/report.controller.js';
+const router = Router(); router.use(requireAuth); router.get('/', controller.list); router.post('/', requireRole('ADMIN'), controller.create); router.get('/:id/download', controller.download); export default router;

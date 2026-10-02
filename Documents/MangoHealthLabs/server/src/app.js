@@ -1,0 +1,28 @@
+import express from 'express';
+import cors from 'cors';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import healthRoutes from './routes/health.routes.js';
+import { env } from './config/env.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/auth.routes.js';
+import catalogueRoutes from './routes/catalogue.routes.js';
+import bookingRoutes from './routes/booking.routes.js';
+import reportRoutes from './routes/report.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+export const app = express();
+app.use(cors({ origin: env.clientUrl }));
+app.use(express.json({ limit: '1mb' }));
+app.use('/reports', express.static(path.join(__dirname, '../reports')));
+app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api', catalogueRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found', errors: [] }));
+app.use(errorHandler);
