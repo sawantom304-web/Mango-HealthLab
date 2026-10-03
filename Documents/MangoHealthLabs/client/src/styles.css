@@ -2685,3 +2685,15 @@ footer .brand { color: #fff; }
 /* Keep catalogue discovery focused on search and health categories. */
 .filter-sidebar,
 .mobile-filter-trigger { display: none !important; }
+
+.auth-switch {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--editorial-green);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 14px 8px 4px;
+  text-decoration: underline;
+}
+.auth-switch:hover { color: var(--editorial-black); }

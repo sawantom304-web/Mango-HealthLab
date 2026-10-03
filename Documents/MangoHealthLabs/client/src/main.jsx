@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:4000/api');
 
 const categories = ['All Tests', 'Full Body', 'Diabetes', 'Heart', 'Thyroid', 'Vitamins', 'Kidney', 'Liver', 'Men\'s Health', 'Women\'s Health'];
 
@@ -356,7 +356,8 @@ function Shell({ user, page, setPage, cartCount, onOpenCart, onLogin, onLogout, 
 }
 
 function LoginModal({ onClose, onSuccess }) {
-  const [form, setForm] = useState({ email: 'patient@mangohealthlab.test', password: 'Mango@123' });
+  const [mode, setMode] = useState('login');
+  const [form, setForm] = useState({ name: '', email: 'patient@mangohealthlab.test', phone: '', password: 'Mango@123' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -365,11 +366,14 @@ function LoginModal({ onClose, onSuccess }) {
     setBusy(true);
     setError('');
     try {
-      const result = await api('/auth/login', { method: 'POST', body: JSON.stringify(form) });
+      const payload = mode === 'login'
+        ? { email: form.email, password: form.password }
+        : { name: form.name, email: form.email, phone: form.phone, password: form.password };
+      const result = await api(`/auth/${mode === 'login' ? 'login' : 'register'}`, { method: 'POST', body: JSON.stringify(payload) });
       localStorage.setItem('mango-token', result.data.token);
       onSuccess(result.data.user);
     } catch (err) {
-      setError(err.message);
+      setError(err.message === 'Failed to fetch' ? 'Unable to reach the Mango HealthLab API. Please check the deployment API URL.' : err.message);
     } finally {
       setBusy(false);
     }
@@ -381,29 +385,42 @@ function LoginModal({ onClose, onSuccess }) {
         <button className="close-button" onClick={onClose} aria-label="Close"><X size={24} /></button>
         <div className="modal-icon"><ShieldCheck size={32} /></div>
         <p className="overline">MANGO HEALTHLAB</p>
-        <h2>Welcome back</h2>
-        <p className="muted">Sign in to access your digital reports and test bookings.</p>
+        <h2>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
+        <p className="muted">{mode === 'login' ? 'Sign in to access your digital reports and test bookings.' : 'Create an account to book tests and keep your reports in one place.'}</p>
         <form onSubmit={submit}>
+          {mode === 'register' && (
+            <>
+              <label>Full Name
+                <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required minLength="2" autoComplete="name" />
+              </label>
+              <label>Phone Number
+                <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required minLength="8" autoComplete="tel" />
+              </label>
+            </>
+          )}
           <label>Email Address
-            <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+            <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required autoComplete="email" />
           </label>
           <label>Password
-            <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
+            <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required minLength="8" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
           </label>
           {error && <div className="error-message">{error}</div>}
           <Button type="submit" size="large" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in to my account'}
+            {busy ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : (mode === 'login' ? 'Sign in to my account' : 'Create my account')}
             <ArrowRight size={22} />
           </Button>
         </form>
-        <div className="demo-note">
+        <button type="button" className="auth-switch" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>
+          {mode === 'login' ? 'New to Mango HealthLab? Create an account' : 'Already have an account? Sign in'}
+        </button>
+        {mode === 'login' && <div className="demo-note">
           <strong>Quick Demo Logins</strong>
           <div className="demo-buttons">
-            <button type="button" onClick={() => setForm({ email: 'patient@mangohealthlab.test', password: 'Mango@123' })}>Patient Demo</button>
-            <button type="button" onClick={() => setForm({ email: 'admin@mangohealthlab.test', password: 'Mango@123' })}>Admin Demo</button>
-            <button type="button" onClick={() => setForm({ email: 'staff@mangohealthlab.test', password: 'Mango@123' })}>Staff Demo</button>
+            <button type="button" onClick={() => setForm({ ...form, email: 'patient@mangohealthlab.test', password: 'Mango@123' })}>Patient Demo</button>
+            <button type="button" onClick={() => setForm({ ...form, email: 'admin@mangohealthlab.test', password: 'Mango@123' })}>Admin Demo</button>
+            <button type="button" onClick={() => setForm({ ...form, email: 'staff@mangohealthlab.test', password: 'Mango@123' })}>Staff Demo</button>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );
